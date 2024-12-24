@@ -4,7 +4,9 @@ package com.quiz_app.quiz_app.controller;
 import com.quiz_app.quiz_app.dto.request.UserCreationRequest;
 import com.quiz_app.quiz_app.dto.request.UserUpdateRequest;
 import com.quiz_app.quiz_app.dto.response.ApiResponse;
+import com.quiz_app.quiz_app.dto.response.UserResponse;
 import com.quiz_app.quiz_app.entity.User;
+import com.quiz_app.quiz_app.mapper.UserMapper;
 import com.quiz_app.quiz_app.repository.UserRepository;
 import com.quiz_app.quiz_app.service.UserService;
 import jakarta.validation.Valid;
@@ -32,13 +34,14 @@ public class UserController {
         return userService.getUsers();
     }
 
+
     @GetMapping("/user/{userId}")
-    User getUser(@PathVariable("userId") String userId) {
+    UserResponse getUser(@PathVariable("userId") String userId) {
         return userService.getUser(userId);
     }
 
     @PutMapping("/user/{userId}")
-    User updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request) {
+    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request) {
         return userService.updateUser(userId, request);
     }
 
