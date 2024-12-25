@@ -10,11 +10,14 @@ import com.quiz_app.quiz_app.mapper.UserMapper;
 import com.quiz_app.quiz_app.repository.UserRepository;
 import com.quiz_app.quiz_app.service.UserService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 public class UserController {
     @Autowired
@@ -23,17 +26,19 @@ public class UserController {
     private UserRepository userRepository;
 
     @PostMapping("/users")
-    ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request) {
-        ApiResponse<User> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.createRequest(request));
-        return apiResponse;
+    ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
+        return ApiResponse.<UserResponse>builder().result(userService.createRequest(request)).build();
     }
 
     @GetMapping("/users")
-    List<User> getUsers() {
-        return userService.getUsers();
-    }
+    ApiResponse<List<UserResponse>> getUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        log.info("username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(s -> log.info(s.getAuthority()));
+
+        return ApiResponse.<List<UserResponse>>builder().result(userService.getUsers()).build();
+    }
 
     @GetMapping("/user/{userId}")
     UserResponse getUser(@PathVariable("userId") String userId) {

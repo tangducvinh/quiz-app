@@ -9,6 +9,7 @@ import com.quiz_app.quiz_app.dto.request.AuthenticationRequest;
 import com.quiz_app.quiz_app.dto.request.IntrospectResquest;
 import com.quiz_app.quiz_app.dto.response.AuthenticationResponse;
 import com.quiz_app.quiz_app.dto.response.IntrospectResponse;
+import com.quiz_app.quiz_app.entity.User;
 import com.quiz_app.quiz_app.exception.AppException;
 import com.quiz_app.quiz_app.exception.ErrorCode;
 import com.quiz_app.quiz_app.repository.UserRepository;
@@ -22,11 +23,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +43,7 @@ public class AuthenticationService {
 
 
     public AuthenticationResponse authentication(AuthenticationRequest request) {
-        var user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
@@ -48,19 +51,20 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var token = generateToken(request.getUsername(), user.getId());
+        var token = generateToken(user);
 
         return AuthenticationResponse.builder().authenticated(true).token(token).build();
     }
 
-    private String generateToken(String username, long userId) {
+    private String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(username)
+                .subject(user.getUsername())
                 .issuer("quiz-app.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("userId", userId)
+                .claim("userId", user.getId())
+                .claim("scope", buildScope(user))
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
@@ -89,5 +93,14 @@ public class AuthenticationService {
         var verified = signedJWT.verify(verifier);
 
         return IntrospectResponse.builder().valid(verified && expityTime.after(new Date())).build();
+    }
+
+    private String buildScope(User user) {
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        if (!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles().forEach(stringJoiner::add);
+        }
+
+        return stringJoiner.toString();
     }
 }
