@@ -11,6 +11,12 @@ import com.quiz_app.quiz_app.exception.ErrorCode;
 import com.quiz_app.quiz_app.mapper.UserMapper;
 import com.quiz_app.quiz_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class UserService {
     @Autowired
     private UserRepository userRepository;
@@ -46,12 +53,25 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    // only admin is allowed to access
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getUsers() {
         return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
     }
 
+    @PostAuthorize("returnObject.username == authentication.name")
     public UserResponse getUser(String uid) {
+        System.out.print("hello herer");
         return userMapper.toUserResponse(userRepository.findById(uid).orElseThrow(() -> new RuntimeException("user not found")));
+    }
+
+    public UserResponse getMyInfo() {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+
+        User user = userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_EXSTED));
+
+        return userMapper.toUserResponse(user);
     }
 
     public UserResponse updateUser(String userId, UserUpdateRequest request) {
