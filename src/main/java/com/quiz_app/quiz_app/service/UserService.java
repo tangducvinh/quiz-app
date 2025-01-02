@@ -35,22 +35,27 @@ public class UserService {
 
     public UserResponse createRequest(UserCreationRequest request) {
             if (userRepository.existsByUsername(request.getUsername())) {
-            throw new AppException(ErrorCode.USER_EXSTED);
+                throw new AppException(ErrorCode.USER_EXSTED);
             }
 
-            User user = userMapper.toUser(request);
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User user = userMapper.toUser(request);
+        System.out.println("hello 3");
 
-            HashSet<String> roles = new HashSet<>();
-            roles.add(Roles.USER.name());
-            user.setRoles(roles);
-            try {
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        try {
+
+
+//            HashSet<String> roles = new HashSet<>();
+//            roles.add(Roles.USER.name());
+//            user.setRoles(roles);
+
                 return userMapper.toUserResponse(userRepository.save(user));
             } catch(Exception e){
                 System.out.println("erorherer");
                 System.out.print(e);
+            return userMapper.toUserResponse(userRepository.save(user));
+
         }
-        return userMapper.toUserResponse(userRepository.save(user));
     }
 
     // only admin is allowed to access

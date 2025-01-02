@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Set;
 
 // table user
@@ -17,13 +18,14 @@ import java.util.Set;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "UUID")
+//    @Column(columnDefinition = "UUID")
     String id;
 
     String username;
     String password;
     String firstName;
     String lastName;
-    LocalDate dob;
-    Set<String> roles;
+    Date dob;
+    @ManyToMany
+    Set<Role> roles;
 }
