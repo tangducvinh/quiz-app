@@ -1,7 +1,10 @@
 package com.quiz_app.quiz_app.configuration;
 
+import com.quiz_app.quiz_app.contant.PredefinedRole;
+import com.quiz_app.quiz_app.entity.Role;
 import com.quiz_app.quiz_app.entity.User;
 import com.quiz_app.quiz_app.enums.Roles;
+import com.quiz_app.quiz_app.repository.RoleRepository;
 import com.quiz_app.quiz_app.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +20,22 @@ import java.util.HashSet;
 public class ApplicationinitConfig {
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository) {
         return args -> {
             if (userRepository.findByUsername("admin").isEmpty()) {
-//                var roles = new HashSet<String>();
-//                roles.add(Roles.ADMIN.name());
+
+                Role adminRole = roleRepository.save(Role.builder()
+                        .name(PredefinedRole.ADMIN_ROLE)
+                        .description("Admin role")
+                        .build());
+
+                var roles = new HashSet<Role>();
+                roles.add(adminRole);
+
                 User user = User.builder().username("admin").password(passwordEncoder.encode("admin123")).build();
                 userRepository.save(user);
                 log.warn("admin user has been created with default password: admin123");

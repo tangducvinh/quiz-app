@@ -9,6 +9,7 @@ import com.quiz_app.quiz_app.enums.Roles;
 import com.quiz_app.quiz_app.exception.AppException;
 import com.quiz_app.quiz_app.exception.ErrorCode;
 import com.quiz_app.quiz_app.mapper.UserMapper;
+import com.quiz_app.quiz_app.repository.RoleRepository;
 import com.quiz_app.quiz_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -31,7 +32,10 @@ public class UserService {
     private UserRepository userRepository;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleRepository roleRepository;
 
     public UserResponse createRequest(UserCreationRequest request) {
             if (userRepository.existsByUsername(request.getUsername())) {
@@ -82,7 +86,16 @@ public class UserService {
     public UserResponse updateUser(String userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("user not found"));
 
-        userMapper.updateUser(user, request);
+        try {
+            userMapper.updateUser(user, request);
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+            var roles = roleRepository.findAllById(request.getRoles());
+            user.setRoles(new HashSet<>(roles));
+        } catch(Exception e) {
+            System.out.println("Error: " + e);
+        }
+
         return userMapper.toUserResponse(userRepository.save(user));
     }
 

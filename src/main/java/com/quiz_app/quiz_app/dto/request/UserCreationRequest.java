@@ -1,6 +1,7 @@
 package com.quiz_app.quiz_app.dto.request;
 
 import com.quiz_app.quiz_app.exception.ErrorCode;
+import com.quiz_app.quiz_app.validator.DobConstraint;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,5 +27,6 @@ public class UserCreationRequest {
      String password;
      String firstName;
      String lastName;
+     @DobConstraint(min = 12, message = "INVALID_DOB")
      LocalDate dob;
 }
